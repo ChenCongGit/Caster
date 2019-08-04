@@ -1,0 +1,117 @@
+syntax = "proto2";
+package Caster.protos;
+
+import "Caster/protos/hyperparams.proto";
+import "Caster/protos/loss.proto";
+import "Caster/protos/label_map.proto";
+
+
+message Model {
+    oneof model_oneof {
+        MultiPredictorsRecognitionModel multi_predictors_recognition_model = 1;
+        CtcRecognitionModel ctc_recognition_model = 2;
+    }
+}
+
+message MultiPredictorsRecognitionModel {
+    optional SpatialTransformer spatial_transformer = 1;
+    optional FeatureExtractor feature_extractor = 2;
+    repeated Predictor predictor = 3;
+    optional bool keypoint_supervision = 4 [default = false];
+    optional Loss regression_loss = 5;
+    optional bool summarize_activation = 6 [default = true];
+}
+
+message CtcRecognitionModel {
+    optional FeatureExtractor feature_extractor = 1;
+    optional Hyperparams fc_hyperparams = 2;
+    optional LabelMap label_map = 3;
+    optional bool summarize_activation = 4 [default = true];
+}
+
+message SpatialTransformer {
+    optional int32 localization_h = 1 [default = 64];
+    optional int32 localization_w = 2 [default = 128];
+    optional int32 output_h = 3 [default = 32];
+    optional int32 output_w = 4 [default = 100];
+    optional int32 num_control_points = 5 [default = 20];
+    optional string init_bias_pattern = 6 [default = "identity"];
+    optional float margin_x = 7 [default = 0.1];
+    optional float margin_y = 8 [default = 0.1];
+    optional string activation = 9 [default = "none"];
+    optional bool summarize_activations = 10 [default = false];
+}
+
+message FeatureExtractor {
+    optional Convnet convnet = 1;
+    repeated BidirectionalRnn bidirectional_rnn = 2;
+    optional bool summarize_activations = 3 [default = true];
+}
+
+message Convnet {
+    oneof convnet_oneof {
+        ResNet resnet = 1;
+        CrnnNet crnn_net = 2;
+    }
+}
+
+message ResNet {
+    optional Hyperparams conv_hyperparams = 1;
+    optional bool summarize_activations = 2;
+}
+
+message CrnnNet {
+    optional Hyperparams conv_hyperparams = 1;
+    optional bool summarize_activations = 2;
+}
+
+message BidirectionalRnn {
+    optional RnnCell rnn_cell = 1;
+    optional Regularizer rnn_regularizer = 2;
+    optional int32 num_output_units = 3 [default = 0];
+    optional Hyperparams fc_hyperparams = 4;
+    optional bool summarize_activations = 5 [default = false];
+    optional bool static = 6 [default = true];
+}
+
+message RnnCell {
+    oneof rnn_cell_oneof {
+        LstmCell lstm_cell = 1;
+        GruCell gru_cell = 2;
+    }
+}
+
+message LstmCell {
+    optional int32 num_units = 1;
+    optional bool use_peepholes = 2 [default=false];
+    optional float forget_bias = 3 [default=1.0];
+    optional Initializer initializer = 4;
+}
+
+message GruCell {
+    optional int32 num_units = 1;
+    optional Initializer initializer = 2;
+}
+
+message Predictor {
+  optional string name = 1;
+  oneof predictor_oneof {
+    AttentionPredictor attention_predictor = 2;
+    CtcPredictor ctc_predictor = 3;
+  }
+}
+
+message AttentionPredictor {
+    optional RnnCell rnn_cell = 1;
+    optional Regularizer rnn_regularizer = 2;
+    optional int32 num_attention_units = 3 [default=128];
+    optional int32 max_num_steps = 4 [default=40];
+    optional bool multi_attention = 5 [default = false];
+    optional int32 beam_width = 6 [default = 1];
+    optional bool reverse = 7 [default = false];
+    optional LabelMap label_map = 8;
+    optional Loss loss = 9;
+    optional bool sync = 10 [default = true];
+}
+
+message CtcPredictor {}

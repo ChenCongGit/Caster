@@ -1,0 +1,27 @@
+syntax = "proto2";
+package Caster.protos;
+
+import "Caster/protos/data_preprocess.proto";
+
+
+message InputReader {
+    optional string dataset_name = 1 [default = "ic15"];
+    optional bool is_training = 2 [default = true];
+    optional TfrecordDecoder tfrecord_decoder = 3;
+    optional InputBatch input_batch = 4;
+}
+
+message TfrecordDecoder {
+    optional int32 num_samples = 1 [default = 0];
+    optional int32 num_classes = 2 [default = 0];
+    optional int32 num_readers = 3 [default = 1];
+    optional int32 queue_capacity = 4 [default = 1024];
+    optional int32 queue_min = 5 [default = 512];
+}
+
+message InputBatch {
+    repeated PreprocessingStep preprocess_option = 1;
+    optional int32 batch_size = 2 [default = 32];
+    optional int32 num_threads = 3 [default = 4];
+    optional int32 capacity = 4 [default = 128];
+}

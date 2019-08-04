@@ -1,0 +1,229 @@
+model {
+  multi_predictors_recognition_model {
+    spatial_transformer {
+      localization_h: 32
+      localization_w: 64
+      output_h: 32
+      output_w: 100
+      margin_x: 0
+      margin_y: 0
+      num_control_points: 20
+      init_bias_pattern: "sine"
+      summarize_activations: true
+    }
+    
+    feature_extractor {
+      convnet {
+        resnet {
+          conv_hyperparams {
+            op: CONV
+            regularizer { l2_regularizer { weight: 0 } }
+            initializer { variance_scaling_initializer { } }
+            batch_norm { decay: 0.99 }
+          }
+          summarize_activations: false
+        }
+      }
+      bidirectional_rnn {
+        static: false
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      bidirectional_rnn {
+        static: false
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      summarize_activations: true
+    }
+
+    predictor {
+      name: "Forward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 30
+        multi_attention: false
+        beam_width: 5
+        reverse: false
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+
+    predictor {
+      name: "Backward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 30
+        multi_attention: false
+        beam_width: 5
+        reverse: true
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+  }
+}
+
+train_config {
+  optimizer {
+    adadelta_optimizer {
+      learning_rate {
+        manual_step_learning_rate {
+          initial_learning_rate: 1
+          schedule {
+            step: 80000
+            learning_rate: 1e-1
+          }
+          schedule {
+            step: 120000
+            learning_rate: 1e-2
+          }
+          schedule {
+            step: 180000
+            learning_rate: 1e-3
+          }
+        }
+      }
+    }
+  }
+  num_steps: 200000
+  keep_checkpoint_every_n_hours: 1
+  save_checkpoint_secs: 5000
+  save_summaries_steps: 2000
+}
+
+train_input_reader {
+  dataset_name: "ic15"
+  is_training: true
+  tfrecord_decoder {
+    num_samples: 848
+    num_classes: 95
+    num_readers: 4
+    queue_capacity: 512
+    queue_min: 128
+  }
+  input_batch {
+    preprocess_option {
+      resize_image_random_method {
+        target_height: 64
+        target_width: 256
+      }
+    }
+    preprocess_option {
+      string_filtering {
+        lower_case: false
+        include_charset {
+          built_in_set: ALLCASES_SYMBOLS
+        }
+      }
+    }
+    batch_size: 32
+    num_threads: 4
+    capacity: 128
+  }
+}
+
+eval_config {
+  metrics_set: "recognition_metrics"
+  num_examples: 1095
+  num_visualizations: 0
+}
+
+eval_input_reader {
+  dataset_name: "ic15"
+  is_training: false
+  tfrecord_decoder {
+    num_samples: 1095
+    num_classes: 95
+    num_readers: 4
+    queue_capacity: 512
+    queue_min: 128
+  }
+  input_batch {
+    preprocess_option {
+      resize_image_random_method {
+        target_height: 64
+        target_width: 256
+      }
+    }
+    preprocess_option {
+      string_filtering {
+        lower_case: false
+        include_charset {
+          built_in_set: ALLCASES_SYMBOLS
+        }
+      }
+    }
+    batch_size: 32
+    num_threads: 4
+    capacity: 128
+  }
+}
+

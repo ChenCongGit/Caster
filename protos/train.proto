@@ -1,0 +1,17 @@
+syntax = "proto2";
+package Caster.protos;
+
+import "Caster/protos/optimizer.proto";
+
+// Message for configuring DetectionModel training jobs (train.py).
+message TrainConfig {
+  optional Optimizer optimizer = 1;
+  optional bool sync_replicas = 2 [default=false];
+  optional bool fine_tune_pretrained = 3 [default=false];
+  optional uint32 keep_checkpoint_every_n_hours = 4 [default=1000];
+  optional uint32 num_steps = 5 [default=0];
+  optional int32 save_checkpoint_secs = 6 [default=600];
+  optional int32 save_summaries_steps = 7 [default=100];
+  optional int32 replicas_to_aggregate = 8 [default=1];
+  optional int32 total_num_replicas = 9 [default=15];
+}

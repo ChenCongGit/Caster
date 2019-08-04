@@ -1,0 +1,16 @@
+syntax = "proto2";
+package Caster.protos;
+
+message EvalConfig {
+    optional bool eval_with_lexicon = 1 [default = false];
+    optional int32 num_visualizations = 2 [default = 10];
+    optional bool only_visualize_incorrect = 3 [default = false];
+    optional string metrics_set = 4 [default = "recognition_metrics"];
+    optional int32 num_examples = 5;
+    optional uint32 eval_interval_secs = 6 [default = 300];
+    optional bool ignore_groundtruth = 7 [default = false];
+    optional string eval_master = 8 [default = ""];
+    optional bool save_graph = 9 [default = false];
+    optional bool eval_instance_masks = 10 [default = false];
+    optional int32 max_evals = 11 [default = 0];
+}

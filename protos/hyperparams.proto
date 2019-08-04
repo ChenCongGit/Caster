@@ -1,0 +1,81 @@
+syntax = "proto2";
+package Caster.protos;
+
+
+message Hyperparams {
+    enum Op {
+        CONV = 1;
+        FC = 2;
+    }
+    enum Activation {
+        NONE = 1;
+        RELU = 2;
+        RELU_6 = 3;
+    }
+    optional BatchNorm batch_norm = 1;
+    optional Op op = 2 [default = CONV];
+    optional Regularizer regularizer = 3;
+    optional Initializer initializer = 4;
+    optional Activation activation = 5 [default = RELU];
+}
+
+message Regularizer {
+    oneof regularizer_oneof {
+        L1Regularizer l1_regularizer = 1;
+        L2Regularizer l2_regularizer = 2;
+    }
+}
+
+message L1Regularizer {
+    optional float weight = 1 [default = 0.0001];
+}
+
+message L2Regularizer {
+    optional float weight = 1 [default = 0.0001];
+}
+
+message Initializer {
+    oneof initializer_oneof {
+        TruncatedNormalInitializer truncated_normal_initializer = 1;
+        VarianceScalingInitializer variance_scaling_initializer = 2;
+        OrthogonalInitializer orthogonal_initializer = 3;
+        UniformInitializer uniform_initializer = 4;
+    }
+}
+
+message TruncatedNormalInitializer {
+    optional float mean = 1 [default = 0.0];
+    optional float stddev = 2 [default = 1.0];
+}
+
+message VarianceScalingInitializer {
+    optional float factor = 1 [default = 2.0];
+    optional bool uniform = 2 [default = false];
+    enum Mode {
+        FAN_IN = 0;
+        FAN_OUT = 1;
+        FAN_AVG = 2;
+    }
+    optional Mode mode = 3 [default = FAN_IN];
+}
+
+message OrthogonalInitializer {
+  optional float gain = 1 [default = 1.0];
+  optional int32 seed = 2;
+}
+
+message UniformInitializer {
+  optional float minval = 1 [default = -0.1];
+  optional float maxval = 2 [default = 0.1];
+}
+
+message BatchNorm {
+  optional float decay = 1 [default = 0.999];
+  optional bool center = 2 [default = true];
+  optional bool scale = 3 [default = false];
+  optional float epsilon = 4 [default = 0.001];
+  // Whether to train the batch norm variables. If this is set to false during
+  // training, the current value of the batch_norm variables are used for
+  // forward pass but they are never updated.
+  optional bool train = 5 [default = true];
+}
